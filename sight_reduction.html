@@ -1,0 +1,439 @@
+<!DOCTYPE html PUBLIC"-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+   <script>
+
+	function init_form()
+	{
+		var now = new Date();
+		form.od.value = "" + ("0"+now.getDate()).slice(-2) + "-" + ("0"+(now.getMonth() + 1)).slice(-2) + "-" + now.getFullYear();
+		form.zone.value = now.getTimezoneOffset()/60;
+	}
+
+	function fix_angle(target)
+	{
+		if (target.value !== "") {
+			var stripped_input = target.value.replace(/\xB0/g, " ").replace(/'/g, " ").replace(/  /g, " ");
+			if (stripped_input.split(" ")[1] === undefined || stripped_input.split(" ")[1] === "")
+				var formatted_output = stripped_input.split(" ")[0] + "'";
+			else
+				var formatted_output = stripped_input.split(" ")[0] + "\xB0 " + 
+					stripped_input.split(" ")[1] + "'";
+			target.value = formatted_output;
+		}		
+	}
+
+
+	function fix_time(target)
+	{
+		if (target.value !== "") {
+			var stripped_input = target.value.replace(/:/g, " ").replace(/ /g, "");
+			var formatted_output = stripped_input.substring(0,2) + ":" + 
+				stripped_input.substring(2,4) + ":" + 
+				stripped_input.substring(4,6);
+			target.value = formatted_output;
+		}
+	}
+
+	function set_now(source, checkbox)
+	{
+		if (source.value === "") {
+			var now = new Date();
+			source.value = "" + ("0"+now.getHours()).slice(-2) + ":" + ("0"+now.getMinutes()).slice(-2) + ":" + ("0"+now.getSeconds()).slice(-2);
+
+			checkbox.checked=true;
+			calculate_ot();
+		}
+	}
+
+	function get_angle(source)
+	{
+		var stripped_input = source.value.replace(/\xB0/g, "").replace(/'/g, "").replace(/  /g, " ").replace(/-/g, "");
+
+		if (stripped_input !== "")
+		{
+			var angle;
+			var degrees;
+
+			if (stripped_input.split(" ")[1] === undefined ) {
+				degrees = 0;
+				minutes = 1 * stripped_input.split(" ")[0];
+			} else {
+				degrees = 1 * stripped_input.split(" ")[0];
+				minutes = 1 * stripped_input.split(" ")[1];
+			}
+
+			angle = (degrees + minutes / 60);
+			if (source.value.indexOf("-") == 0) angle = - angle;
+
+		} else
+			angle = 0;
+
+		return (angle);
+	}
+
+
+	function get_angle_radians(source)
+	{
+		return (get_angle(source)/180*Math.PI);
+	}
+
+
+	function get_time(source)
+	{
+		var stripped_input = source.value.replace(/:/g, " ").replace(/ /g, "");
+		var my_time = 60 * 60 * stripped_input.substring(0,2) + 60 * stripped_input.substring(2,4) + 1 * stripped_input.substring(4,6);
+		//alert ("get_time(" + source.value + ")=" + my_time);
+		return (my_time);
+	}
+
+
+	function format_angle(i_angle)
+	{
+		var angle = Math.abs(Math.round(i_angle*600)/600);
+		var degrees = Math.floor(angle);
+		var minutes = Math.round(Math.abs(angle - degrees)*600)/10;
+		var formatted_angle = (i_angle < 0 ? "-" : "" ) + (degrees > 0 ? degrees + "\xB0 " : "" ) + 
+				minutes + "'";
+
+		return (formatted_angle);
+	}
+
+
+	function format_time(i_time)
+	{
+		var hours = 1*Math.floor(i_time/60/60);
+		var minutes = 1*Math.floor((i_time - hours*60*60)/60);
+		var seconds = 1*Math.floor(i_time - hours*60*60 - minutes*60);
+		var formatted_time = ("0" + hours).slice(-2) + ":" + ("0" + minutes).slice(-2) + ":" + ("0" + seconds).slice(-2);
+
+		return (formatted_time);
+	}
+
+
+	function calculate_sm()
+	{
+		form.sm.value = format_angle(get_angle(form.ic) + get_angle(form.dc));
+		calculate_ha();
+	}
+
+
+	function calculate_ha()
+	{
+		form.ha.value = format_angle(get_angle(form.sm) + get_angle(form.hs));
+		calculate_ho();
+	}
+
+
+	function calculate_tc()
+	{
+		form.tc.value = format_angle(get_angle(form.ac) + get_angle(form.adc) + get_angle(form.hp));
+		calculate_ho();
+	}
+
+
+	function calculate_ho()
+	{
+		form.ho.value = format_angle(get_angle(form.ha) + get_angle(form.tc));
+		form.hoc.value = format_angle(get_angle(form.ha) + get_angle(form.tc));
+		calculate_hc();
+	}
+
+
+	function calculate_ot()
+	{
+		var total_time = 0;
+		var entries = 0;
+
+		var time1 = get_time(form.t1); var check1 = form.c1.checked;
+		if (time1 !== 0 && check1 === true) {total_time += time1; entries += 1;}
+		var time2 = get_time(form.t2); var check2 = form.c2.checked;
+		if (time2 !== 0 && check2 === true) {total_time += time2; entries += 1;}
+		var time3 = get_time(form.t3); var check3 = form.c3.checked;
+		if (time3 !== 0 && check3 === true) {total_time += time3; entries += 1;}
+		var time4 = get_time(form.t4); var check4 = form.c4.checked;
+		if (time4 !== 0 && check4 === true) {total_time += time4; entries += 1;}
+		var time5 = get_time(form.t5); var check5 = form.c5.checked;
+		if (time5 !== 0 && check5 === true) {total_time += time5; entries += 1;}
+
+		if (entries>0) {
+			form.ot.value = format_time(total_time / (entries>0?entries:1));
+			calculate_dec();
+		}
+		calculate_gi();
+		plot_graph();
+	}
+
+
+	function calculate_hs()
+	{
+		var total_angle = 0;
+		var entries = 0;
+
+		var angle1 = get_angle(form.a1); var check1 = form.c1.checked;
+		if (angle1 !== 0 && check1 === true) {total_angle += angle1; entries += 1;}
+		var angle2 = get_angle(form.a2); var check2 = form.c2.checked;
+		if (angle2 !== 0 && check2 === true) {total_angle += angle2; entries += 1;}
+		var angle3 = get_angle(form.a3); var check3 = form.c3.checked;
+		if (angle3 !== 0 && check3 === true) {total_angle += angle3; entries += 1;}
+		var angle4 = get_angle(form.a4); var check4 = form.c4.checked;
+		if (angle4 !== 0 && check4 === true) {total_angle += angle4; entries += 1;}
+		var angle5 = get_angle(form.a5); var check5 = form.c5.checked;
+		if (angle5 !== 0 && check5 === true) {total_angle += angle5; entries += 1;}
+
+		if (entries>0) {
+			form.hs.value = format_angle(total_angle / (entries>0?entries:1));
+			calculate_ha();
+		}
+		plot_graph();
+	}
+
+
+	function calculate_gha()
+	{
+		form.gha.value = format_angle(get_angle(form.tg) + get_angle(form.gi) + get_angle(form.sha));
+		calculate_lha();
+	}
+
+
+	function calculate_lha()
+	{
+		form.lha.value = format_angle((get_angle(form.gha) - get_angle(form.al) + 360) % 360);
+		calculate_hc();
+	}
+
+
+	function calculate_dec()
+	{
+		if (form.td.value !== "") {
+
+			var ot = form.ot.value;
+			var minutes = 1*ot.substring(3,5);
+			var seconds = 1*ot.substring(6);
+
+			var d = get_angle(form.d);
+
+			var tdc = (minutes + seconds/60) / 60 * d;
+			form.tdc.value = format_angle(tdc);
+
+			form.dec.value = format_angle(get_angle(form.td) + get_angle(form.tdc));
+			calculate_hc();
+		}
+	}
+
+
+	function calculate_hc()
+	{
+		if (form.dec.value !== "") {
+			var lat = get_angle_radians(form.dlat);
+			var lha = get_angle_radians(form.lha);
+			var dec = get_angle_radians(form.dec);
+			var ho = get_angle(form.ho);			
+
+			//hc in degrees:
+			var hc = 180/Math.PI*Math.asin(Math.sin(lat)*Math.sin(dec)+Math.cos(lat)*Math.cos(dec)*Math.cos(lha));	
+
+			form.hc.value = format_angle(hc);
+			form.intercept.value = format_angle(Math.abs(ho - hc)) + (ho > hc?" T":" A");
+
+			var z = 180/Math.PI* Math.atan((Math.sin(lha))/(Math.sin(lat)*Math.cos(lha)-Math.tan(dec)*Math.cos(lat)));
+			form.z.value = format_angle(z);
+			form.zn.value = format_angle(z + 180);
+		}
+	}
+
+
+	function calculate_gi()
+	{
+		if (form.tg.value !== "") {
+			var ot = form.ot.value;
+			var minutes = 1*ot.substring(3,5);
+			var seconds = 1*ot.substring(6);
+			factor = 86400/86164.1;
+			body = form.body.value;
+
+			if (body.toLowerCase() === "sun") factor = 1;
+			if (body.toLowerCase() === "mars") factor = 1;
+			if (body.toLowerCase() === "venus") factor = 1;
+			if (body.toLowerCase() === "jupiter") factor = 1;
+			if (body.toLowerCase() === "saturn") factor = 1;
+			if (body.toLowerCase() === "saturnus") factor = 1;
+			if (body.toLowerCase() === "moon") factor = (14+19/60)/15;
+			
+			gi = (minutes + seconds/60) / 4 * factor;
+			form.gi.value = format_angle(gi);
+	
+			calculate_gt();
+		}
+	}
+
+
+	function calculate_gt()
+	{
+		var ot = form.ot.value;
+		var od = form.od.value;
+
+		var hours = 1*ot.substring(0,2);
+		var minutes = 1*ot.substring(3,5);
+		var seconds = 1*ot.substring(6);
+		var day = od.split("-")[0];
+		var month = od.split("-")[1];
+		var year = od.split("-")[2];
+		
+		var od = new Date (year, month - 1, day, hours, minutes, seconds);
+
+		form.gd.value = "" + ("0"+od.getUTCDate()).slice(-2) + "-" + ("0"+(od.getUTCMonth() + 1)).slice(-2) + "-" + od.getUTCFullYear();	
+		form.gt.value = "" + ("0"+od.getUTCHours()).slice(-2) + ":" + ("0"+od.getUTCMinutes()).slice(-2) + ":" + ("0"+od.getUTCSeconds()).slice(-2);	
+		calculate_gha();
+	}
+
+
+	function plot_graph()
+	{
+		var min_time = 0;
+		var max_time = 0;
+		var min_angle = 0;
+		var max_angle = 0;
+		var entries = 0;
+
+		var time_factor;
+		var angle_factor;
+		var canvas_height = 130;
+		var canvas_width = 180;
+		var canvas_margin = 4;
+		var c = document.getElementById("myCanvas");
+		var ctx = c.getContext("2d");
+
+		function process_sight (t, a, c)
+		{
+			if (c === true && a !== 0 ) {
+				if (t<min_time || min_time === 0) min_time = t;
+				if (t>max_time) max_time = t;
+				if (a<min_angle || min_angle === 0) min_angle = a;
+				if (a>max_angle) max_angle = a;
+				entries += 1;
+			}
+		}
+
+		function plot (t, a, c)
+		{
+			if (t !== 0 && a !== 0) {
+				var x = (t-min_time)*time_factor + canvas_margin;
+				var y = canvas_height-(a-min_angle)*angle_factor-canvas_margin;
+
+				ctx.beginPath();
+				if (c !== true)
+					ctx.strokeStyle = "#FF0000";
+				ctx.arc(x, y, 1, 0, 2*Math.PI);
+				ctx.stroke();
+				ctx.strokeStyle = "#000000";
+			}
+		}
+
+		t1=get_time(form.t1);t2=get_time(form.t2);t3=get_time(form.t3);t4=get_time(form.t4);t5=get_time(form.t5);
+		a1=get_angle(form.a1);a2=get_angle(form.a2);a3=get_angle(form.a3);a4=get_angle(form.a4);a5=get_angle(form.a5);
+		c1=form.c1.checked;c2=form.c2.checked;c3=form.c3.checked;c4=form.c4.checked;c5=form.c5.checked;
+
+		process_sight (t1, a1, c1);process_sight (t2, a2, c2);process_sight (t3, a3, c3);process_sight (t4, a4, c4);process_sight (t5, a5, c5);	
+
+		ctx.beginPath();
+		ctx.clearRect(0,0, c.width, c.height);
+		ctx.stroke();
+
+		if (entries > 2) {
+			time_factor = (canvas_width - 2 * canvas_margin) / (max_time - min_time);
+			angle_factor = (canvas_height - 2 * canvas_margin) / (max_angle - min_angle);
+			ctx.beginPath();
+			ctx.moveTo(canvas_margin, canvas_height-canvas_margin);
+			ctx.lineTo(canvas_width-canvas_margin, canvas_margin);
+			ctx.stroke();
+			
+			plot (t1, a1, c1);
+			plot (t2, a2, c2);
+			plot (t3, a3, c3);
+			plot (t4, a4, c4);
+			plot (t5, a5, c5);
+		}
+	}
+
+   </script>
+</head>
+<body onLoad="init_form();">
+
+<form name="form" method="post">
+<table border="0" bgcolor="dddddd" align="center"><tr>
+	<td><table width="100%" border="0">
+		<tr><td>Body<td><input type="text" name="body" size="7,1" onChange="document.title=this.value;calculate_gi();">
+		<tr><td>Date<td><input type="text" name="od" size="7,1" onChange="calculate_gt();">
+		<tr><td>Zone<td><input type="text" name="zone" size="7,1" disabled="true">
+		<tr><td>DR LAT<td><input type="text" name="dlat" size="7,1" onChange="fix_angle(this);calculate_hc();">
+		<tr><td>DR LON<td><input type="text" name="dlon" size="7,1" onChange="fix_angle(this);form.al.value=this.value;calculate_lha();">
+		</table> 
+	<td><table valign="right" border="0">
+		<tr><td>Time<td><input type="text" name="t1" size="7,1" onChange="fix_time(this);form.c1.checked=true;calculate_ot();">
+			<td>Hs <input type="text" name="a1" size="7,1" onFocusIn="set_now(form.t1, form.c1);" onChange="fix_angle(this);calculate_hs();">
+			<td><input type="checkbox" name="c1" size="7,1" onChange="calculate_ot();calculate_hs();" tabindex="-1">
+		<tr><td>Time<td><input type="text" name="t2" size="7,1" onChange="fix_time(this);form.c2.checked=true;calculate_ot();">
+			<td>Hs <input type="text" name="a2" size="7,1" onFocusIn="set_now(form.t2, form.c2);" onChange="fix_angle(this);calculate_hs();">
+			<td><input type="checkbox" name="c2" size="7,1" onChange="calculate_ot();calculate_hs();" tabindex="-1">
+		<tr><td>Time<td><input type="text" name="t3" size="7,1" onChange="fix_time(this);form.c3.checked=true;calculate_ot();">
+			<td>Hs <input type="text" name="a3" size="7,1" onFocusIn="set_now(form.t3, form.c3);" onChange="fix_angle(this);calculate_hs();">
+			<td><input type="checkbox" name="c3" size="7,1" onChange="calculate_ot();calculate_hs();" tabindex="-1">
+		<tr><td>Time<td><input type="text" name="t4" size="7,1" onChange="fix_time(this);form.c4.checked=true;calculate_ot();">
+			<td>Hs <input type="text" name="a4" size="7,1" onFocusIn="set_now(form.t4, form.c4);" onChange="fix_angle(this);calculate_hs();">
+			<td><input type="checkbox" name="c4" size="7,1" onChange="calculate_ot();calculate_hs();" tabindex="-1">
+		<tr><td>Time<td><input type="text" name="t5" size="7,1" onChange="fix_time(this);form.c5.checked=true;calculate_ot();">
+			<td>Hs <input type="text" name="a5" size="7,1" onFocusIn="set_now(form.t5, form.c5);" onChange="fix_angle(this);calculate_hs();">
+			<td><input type="checkbox" name="c5" size="7,1" onChange="calculate_ot();calculate_hs();" tabindex="-1">
+		</table>
+	<td><canvas id="myCanvas" width="180" height="130" style="border:1px solid #d3d3d3;">Your browser does not support the HTML5 canvas tag.</canvas>
+<tr><td colspan="3">
+<table width="100%" border="1"><tr>
+	<td><table width="100%">
+		<tr><td>hs (sextant)<td><input type="text" name="hs" size="7,1" onChange="fix_angle(this);calculate_ha();" disabled="true">
+		<tr><td>index correction<td><input type="text" name="ic" size="7,1" onChange="fix_angle(this);calculate_sm();">
+		<tr><td>dip correction<td><input type="text" name="dc" size="7,1" onChange="fix_angle(this);calculate_sm();">
+		<tr><td>sum<td><input type="text" name="sm" size="7,1" onChange="fix_angle(this);calculate_ha();" disabled="true">
+		<tr><td>ha (apparent)<td><input type="text" name="ha" size="7,1" onChange="fix_angle(this);calculate_ho();" disabled="true">
+		<tr><td>altitude correction<td><input type="text" name="ac" size="7,1" onChange="fix_angle(this);calculate_tc();">
+		<tr><td>additional correction<td><input type="text" name="adc" size="7,1" onChange="fix_angle(this);calculate_tc();">
+		<tr><td>horizontal parallax<td><input type="text" name="hp" size="7,1" onChange="fix_angle(this);calculate_tc();">
+		<tr><td>correction to ha<td><input type="text" name="tc" size="7,1" onChange="fix_angle(this);" disabled="true">
+		<tr><td>ho (observed)<td><input type="text" name="ho" size="7,1" onChange="fix_angle(this);" disabled="true">
+	    </table>
+	<td><table width="100%">
+		<tr><td>observation time<td><input type="text" name="ot" size="7,1" onChange="fix_time(this);" disabled="true">
+		<tr><td>GMT date<td><input type="text" name="gd" size="7,1" disabled="true">
+		<tr><td>GMT time<td><input type="text" name="gt" size="7,1" onChange="fix_time(this);" disabled="true">
+		<tr><td>TAB GHA<td><input type="text" name="tg" size="7,1" onChange="fix_angle(this);calculate_gi();">
+		<tr><td>GHA increment<td><input type="text" name="gi" size="7,1" onChange="fix_angle(this);" disabled="true">
+		<tr><td>SHA<td><input type="text" name="sha" size="7,1" onChange="fix_angle(this);calculate_gha();">
+		<tr><td>GHA<td><input type="text" name="gha" size="7,1" onChange="fix_angle(this);" disabled="true">
+		<tr><td>Assumed LON<td><input type="text" name="al" size="7,1" onChange="fix_angle(this);calculate_lha();">
+		<tr><td>LHA<td><input type="text" name="lha" size="7,1" onChange="fix_angle(this);" disabled="true">
+		<tr><td>&nbsp;<td>
+	    </table>
+	<td><table width="100%">
+		<tr><td>Tab DEC/d<td><input type="text" name="td" size="7,1" onChange="fix_angle(this);calculate_dec();">
+		<tr><td>d <input type="text" name="d" size="2,1" onChange="fix_angle(this);calculate_dec();"> correction<td><input type="text" name="tdc" size="7,1" disabled="true">
+		<tr><td>True DEC<td><input type="text" name="dec" size="7,1" onChange="fix_angle(this);" disabled="true">
+		<tr><td>Hc (computed)<td><input type="text" name="hc" size="7,1" onChange="fix_angle(this);" disabled="true">
+		<tr><td>Ho (observed)<td><input type="text" name="hoc" size="7,1" onChange="fix_angle(this);" disabled="true">
+		<tr><td>a (intercept)<td><input type="text" name="intercept" size="7,1" onChange="fix_angle(this);" disabled="true">
+		<tr><td>Z (azimuth angle)<td><input type="text" name="z" size="7,1" onChange="fix_angle(this);" disabled="true">
+		<tr><td>Zn (azimuth)<td><input type="text" name="zn" size="7,1" onChange="fix_angle(this);" disabled="true">
+		<tr><td>&nbsp;<td>
+		<tr><td colspan="2" align="center">&copy; Marco Bergman 2019<td>
+	    </table>
+</table>
+</tr>
+</table>
+
+</form>
+</body>
+</html>
+
+
+
