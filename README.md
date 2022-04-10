@@ -6,5 +6,5 @@ Javascript based tool that simplifies the calculations needed to reduce a celest
 ## Notes
 - Time zone is automatically calculated from the browser's timezone.
 - Angles are entered with a space between degrees and minutes. If no space is found, the value is treated as minutes.
-- Up to 5 sights can be entered. They are plotted in a diagram and can be excluded by unchecking the checkbox when clearly false.
+- Up to 5 sights can be entered. They are plotted in a diagram and can be excluded by unchecking the checkbox when clearly false. The selected angles are averaged to form the Hs (height sextant) and the selected times are averaged to become the observed time.
 
